@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pokédex n8n</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@500;600;700&display=swap"
+    rel="stylesheet">
+</head>
+
+<body>
+  <div class="app-container">
+    <!-- Pokédex Body -->
+    <main class="pokedex" id="pokedex">
+      <!-- Top Sensor Bar & Settings -->
+      <header class="pokedex-top">
+        <div class="lens-container">
+          <div class="main-lens" title="Sensor Principal">
+            <div class="lens-glare"></div>
+          </div>
+          <div class="mini-indicators">
+            <span class="indicator red"></span>
+            <span class="indicator yellow"></span>
+            <span class="indicator green"></span>
+          </div>
+        </div>
+
+        <button id="btnOpenSettings" class="btn-settings" title="Configurar Webhook de n8n" aria-label="Ajustes">
+          <span class="gear-icon">⚙️</span>
+        </button>
+      </header>
+
+      <!-- Decorative Divider -->
+      <div class="pokedex-hinge"></div>
+
+      <!-- Main Display Screen Bezel -->
+      <section class="screen-casing">
+        <div class="screen-lights">
+          <span class="screen-dot"></span>
+          <span class="screen-dot"></span>
+        </div>
+
+        <!-- Digital Screen Area -->
+        <div class="screen-display" id="screenDisplay">
+          <!-- Idle / Welcome State -->
+          <div class="screen-content state-idle" id="stateIdle">
+            <div class="pokeball-graphic">
+              <div class="pokeball-inner"></div>
+            </div>
+            <h2>POKÉDEX VINCULADA</h2>
+            <p>Escribe el nombre o número de un Pokémon para escanear sus datos biométricos vía n8n.</p>
+            <div class="idle-hint">Prueba con los accesos rápidos inferiores</div>
+          </div>
+
+          <!-- Loading State -->
+          <div class="screen-content state-loading hidden" id="stateLoading">
+            <div class="scanner-anim">
+              <div class="radar-sweep"></div>
+              <div class="spinning-pokeball"></div>
+            </div>
+            <p class="loading-title">CONSULTANDO N8N...</p>
+            <span class="loading-subtitle">Enviando petición HTTP POST</span>
+          </div>
+
+          <!-- Success / Pokemon Result State -->
+          <div class="screen-content state-success hidden" id="stateSuccess">
+            <div class="pokemon-visual-card">
+              <div class="pokemon-image-wrapper">
+                <img id="pokeImage" src="" alt="Sprite del Pokémon" class="poke-image">
+              </div>
+              <div class="pokemon-info-card">
+                <h3 id="pokeTitle" class="pokemon-title">--</h3>
+                <div class="pokemon-type-wrapper">
+                  <span id="pokeType" class="type-badge">NORMAL</span>
+                </div>
+                <div class="pokemon-metrics">
+                  <div class="metric-box">
+                    <span class="metric-label">ALTURA</span>
+                    <span id="pokeHeight" class="metric-value">--</span>
+                  </div>
+                  <div class="metric-box">
+                    <span class="metric-label">PESO</span>
+                    <span id="pokeWeight" class="metric-value">--</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error State -->
+          <div class="screen-content state-error hidden" id="stateError">
+            <div class="error-icon">⚠️</div>
+            <h3 class="error-title">ERROR DE ESCANEO</h3>
+            <p id="errorMessage" class="error-message">No se pudo encontrar el Pokémon solicitado.</p>
+            <button id="btnRetry" class="btn-retry">Reintentar</button>
+          </div>
+        </div>
+
+        <!-- Speaker Grille & Screen Status -->
+        <div class="screen-footer">
+          <div class="screen-speaker">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <div class="screen-status-led" id="statusLed" title="Estado de conexión"></div>
+        </div>
+      </section>
+
+      <!-- Search & Controls Section -->
+      <section class="controls-section">
+        <!-- Search Bar Form -->
+        <form id="searchForm" class="search-form" autocomplete="off">
+          <div class="search-input-wrapper">
+            <input type="text" id="pokemonInput" class="search-input" placeholder="Ej. pikachu o 25..." required
+              aria-label="Buscar Pokémon">
+            <button type="button" id="btnClearSearch" class="btn-clear" title="Limpiar búsqueda"
+              aria-label="Limpiar">✕</button>
+          </div>
+          <button type="submit" id="btnSearch" class="btn-submit">
+            <span>ESCANEAR</span>
+          </button>
+        </form>
+
+        <!-- Quick Suggestions -->
+        <div class="suggestions-container">
+          <span class="section-label">Sugerencias rápidas:</span>
+          <div class="suggestion-chips">
+            <button type="button" class="chip-btn" data-pokemon="pikachu">⚡ Pikachu</button>
+            <button type="button" class="chip-btn" data-pokemon="snorlax">💤 Snorlax</button>
+            <button type="button" class="chip-btn" data-pokemon="charizard">🔥 Charizard</button>
+            <button type="button" class="chip-btn" data-pokemon="gengar">👻 Gengar</button>
+          </div>
+        </div>
+
+        <!-- Search History -->
+        <div class="history-container">
+          <div class="history-header">
+            <span class="section-label">Historial de sesión:</span>
+            <button type="button" id="btnClearHistory" class="btn-clear-history"
+              title="Borrar historial">Limpiar</button>
+          </div>
+          <div id="historyList" class="history-list">
+            <span class="history-empty">Sin consultas aún</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-card">
+        <header class="modal-header">
+          <h2 id="modalTitle">⚙️ Ajustes del Webhook n8n</h2>
+          <button type="button" id="btnCloseSettings" class="btn-close-modal" aria-label="Cerrar">✕</button>
+        </header>
+
+        <form id="settingsForm" class="modal-body">
+          <p class="modal-description">
+            Configura el endpoint al que la Pokédex enviará la petición POST con el nombre del Pokémon.
+          </p>
+
+          <div class="form-group">
+            <label for="cfgBaseUrl">URL Base de n8n</label>
+            <input type="url" id="cfgBaseUrl" class="form-input" placeholder="http://localhost:5678" required>
+            <small class="field-hint">Usa localhost o tu URL pública de túnel (ej. Pinggy).</small>
+          </div>
+
+          <div class="form-group">
+            <label>Modo de Webhook</label>
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="webhookMode" value="webhook" checked>
+                <span class="radio-custom"></span>
+                <span><strong>Producción</strong> (<code>/webhook/</code>)</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="webhookMode" value="webhook-test">
+                <span class="radio-custom"></span>
+                <span><strong>Test</strong> (<code>/webhook-test/</code>)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="cfgPath">Ruta / Path del Webhook</label>
+            <input type="text" id="cfgPath" class="form-input" placeholder="prueba" value="prueba" required>
+          </div>
+
+          <div class="url-preview-card">
+            <span class="url-preview-label">URL Completa resultante:</span>
+            <code id="fullUrlPreview" class="url-preview-code">http://localhost:5678/webhook-test/prueba</code>
+          </div>
+
+          <footer class="modal-footer">
+            <button type="button" id="btnRestoreDefaults" class="btn-secondary">Restablecer</button>
+            <button type="submit" class="btn-primary">Guardar Cambios</button>
+          </footer>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
